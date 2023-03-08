@@ -13,7 +13,7 @@ export default async function execRedisCommand(
     case 'select':
       return '+OK\r\n'
     case 'keys':
-      return getKeys(client, key)
+      return getKeyList(client, key)
     // case 'scananddelete':
     //   return scanAndDelete(client, key)
     default:
@@ -31,14 +31,13 @@ async function getKey(redis: Redis, key: string) {
   } else throw new Error(`Key ${key} not found`)
 }
 
-async function getKeys(redis: Redis, key: string) {
-  const response = await redis.keys(key)
+async function getKeyList(redis: Redis, key: string) {
+  const response = await redis.keysBuffer(key)
 
   if (response) {
     console.log('response ', response)
     const bytes = Buffer.byteLength(response.toString(), 'utf8')
-    // console.log('response ', response)
-    return '$' + bytes + '\r\n' + response.toString() + '\r\n'
+    return '$' + bytes + '\r\n' + response + '\r\n'
   } else throw new Error(`Key ${key} not found`)
 }
 

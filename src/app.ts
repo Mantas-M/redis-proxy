@@ -37,5 +37,5 @@ const server = net.createServer(async (socket) => {
 
 // Start the server
 server.listen(6381, () => {
-  console.log('Server listening on port 6379')
+  console.log('Server listening on port 6381')
 })

@@ -9,7 +9,7 @@ function createRedisClient(): Promise<Redis> {
     console.log('port ', process.env.REDIS_PORT)
 
     const client = new Redis(
-      `redis://${process.env.REDIS_HOSTNAME}:${process.env.REDIS_PORT}}`
+      `${process.env.REDIS_HOSTNAME}:${process.env.REDIS_PORT}`
     )
 
     client.on('connect', () => {
