@@ -11,6 +11,8 @@ export default async function execRedisCommand(
       return getKey(client, args)
     case 'set':
       return setKey(client, args)
+    case 'setex':
+      return setExKey(client, args)
     case 'command':
       return Buffer.from('+OK\r\n')
     case 'select':
@@ -43,6 +45,17 @@ async function setKey(redis: Redis, args: string[]) {
     return Buffer.from('-Error: Command set takes two arguments\r\n')
 
   const response = await redis.set(args[0], args[1])
+
+  if (response) {
+    return Buffer.from('+OK\r\n')
+  } else return Buffer.from('$' + -1 + '\r\n')
+}
+
+async function setExKey(redis: Redis, args: string[]) {
+  if (args.length !== 3)
+    return Buffer.from('-Error: Command setex takes three arguments\r\n')
+
+  const response = await redis.setex(args[0], args[1], args[2])
 
   if (response) {
     return Buffer.from('+OK\r\n')
