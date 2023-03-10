@@ -36,8 +36,8 @@ export default class RedisPool {
   }
 
   private opts = {
-    max: process.env.MAX_REDIS_CONNECTIONS || 10,
-    min: process.env.MIN_REDIS_CONNECTIONS || 2
+    max: Number.parseInt(process.env.MAX_REDIS_CONNECTIONS!) || 10,
+    min: Number.parseInt(process.env.MIN_REDIS_CONNECTIONS!) || 2
   }
 
   constructor() {
