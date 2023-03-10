@@ -1,7 +1,9 @@
 import net from 'net'
 import RedisConnectionPool from './redis-pool'
-import { getCommandAndKeyFromData } from './util'
+import { getCommandAndArgsFromData } from './utils'
 import execRedisCommand from './redis-wrapper'
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 const connectionPool = new RedisConnectionPool()
 
@@ -10,32 +12,28 @@ const server = net.createServer(async (socket) => {
   const redisClient = await connectionPool.get()
 
   socket.on('data', async (data) => {
-    const { command, key } = getCommandAndKeyFromData(data)
+    const { command, args } = getCommandAndArgsFromData(data)
 
-    console.log('command ', command, 'key ', key)
+    console.log('Got command:', command, 'with args:', args)
 
-    const result = await execRedisCommand(redisClient, command, key)
+    const result = await execRedisCommand(redisClient, command, args)
 
-    // console.log('result ', result)
-
-    // Echo the data back to the client
-    socket.write(result)
+    socket.write(result, () => {
+      console.log('Response sent to client')
+    })
   })
 
-  // Handle client disconnection
-  socket.on('end', () => {
+  socket.on('end', async () => {
+    await connectionPool.release(redisClient)
     console.log('Client disconnected')
-    connectionPool.release(redisClient)
   })
 
-  // Handle errors
   socket.on('error', (err) => {
     console.error('Error:', err)
     socket.write(`-Error: ${err.message}\r\n`)
   })
 })
 
-// Start the server
-server.listen(6381, () => {
-  console.log('Server listening on port 6381')
+server.listen(process.env.PROXY_PORT || 6381, () => {
+  console.log(`Server listening on port ${process.env.PROXY_PORT || 6381}`)
 })

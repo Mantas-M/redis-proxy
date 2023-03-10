@@ -1,13 +1,8 @@
 import genericPool, { Factory } from 'generic-pool'
 import Redis from 'ioredis'
-import * as dotenv from 'dotenv'
-dotenv.config()
 
 function createRedisClient(): Promise<Redis> {
   return new Promise((resolve, reject) => {
-    console.log('host ', process.env.REDIS_HOSTNAME)
-    console.log('port ', process.env.REDIS_PORT)
-
     const client = new Redis(
       `${process.env.REDIS_HOSTNAME}:${process.env.REDIS_PORT}`
     )
@@ -41,8 +36,8 @@ export default class RedisPool {
   }
 
   private opts = {
-    max: 10,
-    min: 2
+    max: process.env.MAX_REDIS_CONNECTIONS || 10,
+    min: process.env.MIN_REDIS_CONNECTIONS || 2
   }
 
   constructor() {
@@ -50,10 +45,10 @@ export default class RedisPool {
   }
 
   async get() {
-    return this.pool.acquire()
+    return await this.pool.acquire()
   }
 
   async release(client: Redis) {
-    return this.pool.release(client)
+    return await this.pool.release(client)
   }
 }
