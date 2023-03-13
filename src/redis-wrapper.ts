@@ -15,6 +15,8 @@ export default async function execRedisCommand(
       return setExKey(client, args)
     case 'command':
       return Buffer.from('+OK\r\n')
+    case 'info':
+      return Buffer.from('+OK\r\n')
     case 'select':
       return Buffer.from('+OK\r\n')
     case 'keys':
@@ -23,6 +25,8 @@ export default async function execRedisCommand(
       return Buffer.from('+PONG\r\n')
     case 'scananddelete':
       return scanAndDelete(client, args)
+    case 'flushall':
+      return flushAll(client, args)
     default:
       return Buffer.from(`-Error: Command ${command} not supported\r\n`)
   }
@@ -89,5 +93,13 @@ async function scanAndDelete(redis: Redis, args: string[]) {
       await redis.del(...keys)
     }
   } while (cursor !== '0')
+  return Buffer.from('+OK\r\n')
+}
+
+async function flushAll(redis: Redis, args: string[]) {
+  if (args.length !== 0)
+    return Buffer.from('-Error: Command flushall takes no arguments\r\n')
+
+  await redis.flushall()
   return Buffer.from('+OK\r\n')
 }

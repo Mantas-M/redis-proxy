@@ -1,6 +1,6 @@
 import net from 'net'
 import RedisConnectionPool from './redis-pool'
-import { getCommandAndArgsFromData } from './utils'
+import { getCommandAndArgsFromData, messageFinished } from './utils'
 import execRedisCommand from './redis-wrapper'
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -8,24 +8,35 @@ dotenv.config()
 const connectionPool = new RedisConnectionPool()
 
 const server = net.createServer(async (socket) => {
-  console.log('Client connected')
+  if (process.env.NODE_ENV === 'dev') console.log('Client connected')
   const redisClient = await connectionPool.get()
+  let userMessage = Buffer.alloc(0)
 
   socket.on('data', async (data) => {
-    const { command, args } = getCommandAndArgsFromData(data)
+    userMessage = Buffer.concat([userMessage, data])
 
-    console.log('Got command:', command, 'with args:', args)
+    if (messageFinished(userMessage)) {
+      if (process.env.NODE_ENV === 'dev') console.log('Message finished')
 
-    const result = await execRedisCommand(redisClient, command, args)
+      const { command, args } = getCommandAndArgsFromData(userMessage)
 
-    socket.write(result, () => {
-      console.log('Response sent to client')
-    })
+      if (process.env.NODE_ENV === 'dev')
+        console.log('Got command:', command, 'with args:', args)
+
+      const result = await execRedisCommand(redisClient, command, args)
+
+      socket.write(result, () => {
+        if (process.env.NODE_ENV === 'dev')
+          console.log('Response sent to client')
+      })
+
+      userMessage = Buffer.alloc(0)
+    }
   })
 
   socket.on('end', async () => {
     await connectionPool.release(redisClient)
-    console.log('Client disconnected')
+    if (process.env.NODE_ENV === 'dev') console.log('Client disconnected')
   })
 
   socket.on('error', (err) => {

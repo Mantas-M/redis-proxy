@@ -26,3 +26,17 @@ export function createRespArray(bufferArray: Buffer[]) {
   }
   return Buffer.concat(respArray)
 }
+
+export function messageFinished(data: Buffer): boolean {
+  const lastTwoBytes = data.subarray(data.length - 2)
+
+  if (lastTwoBytes.equals(Buffer.from('\r\n'))) {
+    if (process.env.NODE_ENV === 'dev')
+      console.log('The response ends with \\r\\n')
+    return true
+  } else {
+    if (process.env.NODE_ENV === 'dev')
+      console.log('The response does not end with \\r\\n')
+    return false
+  }
+}
