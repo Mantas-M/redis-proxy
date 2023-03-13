@@ -5,6 +5,7 @@ REDIS_PORT=YOUR_REDIS_HOST
 PROXY_PORT=6381
 MIN_REDIS_CONNECTIONS=2
 MAX_REDIS_CONNECTIONS=10
+NODE_ENV=dev specifying dev enables logging for the application which slows it down
 
 Proxy port, min and max connections have default values if they are not set on runtime
 
