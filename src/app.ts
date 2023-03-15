@@ -9,7 +9,6 @@ const connectionPool = new RedisConnectionPool()
 
 const server = net.createServer(async (socket) => {
   if (process.env.NODE_ENV === 'dev') console.log('Client connected')
-  const redisClient = await connectionPool.get()
   let userMessage = Buffer.alloc(0)
 
   socket.on('data', async (data) => {
@@ -23,6 +22,7 @@ const server = net.createServer(async (socket) => {
       if (process.env.NODE_ENV === 'dev')
         console.log('Got command:', command, 'with args:', args)
 
+      const redisClient = await connectionPool.get()
       const result = await execRedisCommand(redisClient, command, args)
 
       socket.write(result, () => {
