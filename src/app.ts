@@ -31,11 +31,11 @@ const server = net.createServer(async (socket) => {
       })
 
       userMessage = Buffer.alloc(0)
+      await connectionPool.release(redisClient)
     }
   })
 
   socket.on('end', async () => {
-    await connectionPool.release(redisClient)
     if (process.env.NODE_ENV === 'dev') console.log('Client disconnected')
   })
 
