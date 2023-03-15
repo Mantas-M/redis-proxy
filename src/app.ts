@@ -8,7 +8,8 @@ dotenv.config()
 const connectionPool = new RedisConnectionPool()
 
 const server = net.createServer(async (socket) => {
-  if (process.env.NODE_ENV === 'dev') console.log('Client connected')
+  if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'minimal')
+    console.log('Client connected')
   let userMessage = Buffer.alloc(0)
 
   socket.on('data', async (data) => {
@@ -19,14 +20,22 @@ const server = net.createServer(async (socket) => {
 
       const { command, args } = getCommandAndArgsFromData(userMessage)
 
-      if (process.env.NODE_ENV === 'dev')
-        console.log('Got command:', command, 'with args:', args)
+      if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'minimal')
+        console.log(
+          'Got command:',
+          command,
+          'with byteLength:',
+          Buffer.byteLength(args.toString())
+        )
 
       const redisClient = await connectionPool.get()
       const result = await execRedisCommand(redisClient, command, args)
 
       socket.write(result, () => {
-        if (process.env.NODE_ENV === 'dev')
+        if (
+          process.env.NODE_ENV === 'dev' ||
+          process.env.NODE_ENV === 'minimal'
+        )
           console.log('Response sent to client')
       })
 
@@ -36,7 +45,8 @@ const server = net.createServer(async (socket) => {
   })
 
   socket.on('end', async () => {
-    if (process.env.NODE_ENV === 'dev') console.log('Client disconnected')
+    if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'minimal')
+      console.log('Client disconnected')
   })
 
   socket.on('error', (err) => {
