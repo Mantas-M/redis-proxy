@@ -28,6 +28,12 @@ const server = net.createServer(async (socket) => {
           Buffer.byteLength(args.toString())
         )
 
+      if (command.toLowerCase() === 'destroy') {
+        socket.write('+OK\r\n')
+        socket.destroy()
+        return
+      }
+
       const redisClient = await connectionPool.get()
       const result = await execRedisCommand(redisClient, command, args)
 
@@ -38,7 +44,6 @@ const server = net.createServer(async (socket) => {
         )
           console.log('Response sent to client')
       })
-
       userMessage = Buffer.alloc(0)
       await connectionPool.release(redisClient)
     }
