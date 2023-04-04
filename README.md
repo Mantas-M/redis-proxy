@@ -15,4 +15,4 @@ sudo docker build -t redis-proxy .
 
 Running docker image
 
-sudo docker run --rm -it -p 6381:6381 -e REDIS_HOSTNAME= -e REDIS_PORT= redis-proxy
+sudo docker run --name redis-proxy --restart always -it -p 6381:6381 -e REDIS_HOSTNAME= -e REDIS_PORT= redis-proxy

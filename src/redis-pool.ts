@@ -22,7 +22,7 @@ function createRedisClient(): Promise<Redis> {
 function destroyRedisClient(client: Redis): Promise<void> {
   return new Promise((resolve, reject) => {
     console.log('Destroying Redis client')
-    client.disconnect()
+    client.quit()
     resolve()
   })
 }

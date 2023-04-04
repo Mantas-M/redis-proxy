@@ -1,26 +1,25 @@
 import net from 'net'
-import RedisConnectionPool from './redis-pool'
 import { getCommandAndArgsFromData, messageFinished } from './utils'
-import execRedisCommand from './redis-wrapper'
+import { execRedisCommand, releaseRedisConnection } from './redis-wrapper'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const connectionPool = new RedisConnectionPool()
+const logging =
+  process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'minimal'
 
 const server = net.createServer(async (socket) => {
-  if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'minimal')
-    console.log('Client connected')
+  if (logging) console.log('Client connected')
   let userMessage = Buffer.alloc(0)
 
   socket.on('data', async (data) => {
     userMessage = Buffer.concat([userMessage, data])
 
     if (messageFinished(userMessage)) {
-      if (process.env.NODE_ENV === 'dev') console.log('Message finished')
-
+      if (logging) console.log('Message finished')
       const { command, args } = getCommandAndArgsFromData(userMessage)
+      userMessage = Buffer.alloc(0)
 
-      if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'minimal')
+      if (logging)
         console.log(
           'Got command:',
           command,
@@ -28,35 +27,22 @@ const server = net.createServer(async (socket) => {
           Buffer.byteLength(args.toString())
         )
 
-      if (command.toLowerCase() === 'destroy') {
-        socket.write('+OK\r\n')
-        socket.destroy()
-        return
-      }
-
-      const redisClient = await connectionPool.get()
-      const result = await execRedisCommand(redisClient, command, args)
+      const result = await execRedisCommand(command, args)
 
       socket.write(result, () => {
-        if (
-          process.env.NODE_ENV === 'dev' ||
-          process.env.NODE_ENV === 'minimal'
-        )
-          console.log('Response sent to client')
+        if (logging) console.log('Response sent to client')
       })
-      userMessage = Buffer.alloc(0)
-      await connectionPool.release(redisClient)
     }
   })
 
   socket.on('end', async () => {
-    if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'minimal')
-      console.log('Client disconnected')
+    if (logging) console.log('Client disconnected')
   })
 
-  socket.on('error', (err) => {
+  socket.on('error', async (err) => {
     console.error('Error:', err)
     socket.write(`-Error: ${err.message}\r\n`)
+    await releaseRedisConnection()
   })
 })
 
