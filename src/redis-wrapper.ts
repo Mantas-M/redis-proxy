@@ -5,7 +5,6 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const connectionPool = new RedisConnectionPool()
-let clientBorrowedFromPool: boolean
 let redis: Redis
 
 export async function execRedisCommand(command: string, args: string[]) {
@@ -38,20 +37,18 @@ export async function execRedisCommand(command: string, args: string[]) {
 }
 
 async function getRedisConnection() {
-  if (clientBorrowedFromPool) {
-    console.error('Client already borrowed, should not happen')
+  if (connectionPool.isBorrowed(redis)) {
+    console.error('ERR - Client already borrowed, should not happen')
     return redis
   } else {
     redis = await connectionPool.get()
-    clientBorrowedFromPool = true
     return redis
   }
 }
 
 export async function releaseRedisConnection() {
-  if (clientBorrowedFromPool) {
+  if (connectionPool.isBorrowed(redis)) {
     await connectionPool.release(redis)
-    clientBorrowedFromPool = false
   } else console.info('Client not borrowed')
 }
 

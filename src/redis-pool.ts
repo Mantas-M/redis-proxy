@@ -48,6 +48,10 @@ export default class RedisPool {
     return await this.pool.acquire()
   }
 
+  isBorrowed(resource: Redis) {
+    return this.pool.isBorrowedResource(resource)
+  }
+
   async release(client: Redis) {
     return await this.pool.release(client)
   }
